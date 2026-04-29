@@ -13,7 +13,7 @@ def run_check():
             "Control_ID": "DL-05",
             "Description": "Ensure apt-get uses --no-install-recommends",
             "Status": "N/A",
-            "Details": "No Dockerfile configured. Use --dockerfile-path."
+            "Details": "No target image configured."
         }
 
     run_instructions = [i for i in instructions if i["instruction"] == "RUN"]

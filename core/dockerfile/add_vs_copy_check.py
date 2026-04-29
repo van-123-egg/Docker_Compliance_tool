@@ -12,7 +12,7 @@ def run_check():
             "Control_ID": "DL-03",
             "Description": "Ensure ADD is not used for remote URLs",
             "Status": "N/A",
-            "Details": "No Dockerfile configured. Use --dockerfile-path."
+            "Details": "No target image configured."
         }
 
     add_instructions = [i for i in instructions if i["instruction"] == "ADD"]

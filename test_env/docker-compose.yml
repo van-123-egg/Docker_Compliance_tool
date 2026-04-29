@@ -1,0 +1,37 @@
+version: '3.8'
+services:
+  # Vulnerable service built from an insecure Dockerfile
+  vulnerable-app:
+    build:
+      context: ./vulnerable
+    container_name: cis_test_vulnerable
+    privileged: true
+    network_mode: "host"
+    pid: "host"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /:/hostfs
+    environment:
+      - MYSQL_PWD=supersecretpassword
+    command: ["tail", "-f", "/dev/null"]
+
+  # Secure service built from a compliant Dockerfile
+  secure-app:
+    build:
+      context: ./secure
+    container_name: cis_test_secure
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    command: ["tail", "-f", "/dev/null"]

@@ -12,7 +12,7 @@ def run_check():
             "Control_ID": "DL-04",
             "Description": "Ensure SSH port 22 is not exposed",
             "Status": "N/A",
-            "Details": "No Dockerfile configured. Use --dockerfile-path."
+            "Details": "No target image configured."
         }
 
     expose_instructions = [i for i in instructions if i["instruction"] == "EXPOSE"]

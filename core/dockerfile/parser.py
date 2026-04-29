@@ -9,87 +9,99 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-# Global state — set by main.py via set_dockerfile_path()
-_dockerfile_path = None
+import subprocess
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Global state — set by main.py
+_target_image = None
 _parsed_instructions = None
 
 
-def set_dockerfile_path(path):
-    """Set the Dockerfile path for all checks to use."""
-    global _dockerfile_path, _parsed_instructions
-    _dockerfile_path = path
+def set_target_image(image_name):
+    """Set the target image for all checks to use."""
+    global _target_image, _parsed_instructions
+    _target_image = image_name
     _parsed_instructions = None  # Reset cache
 
 
-def get_dockerfile_path():
-    """Get the currently configured Dockerfile path."""
-    return _dockerfile_path
+def get_target_image():
+    """Get the currently configured target image."""
+    return _target_image
 
 
-def parse_dockerfile(path=None):
-    """Parse a Dockerfile into a list of instruction dicts.
+def parse_dockerfile(image_name=None):
+    """Parse a Docker image's history into a list of instruction dicts.
     
     Returns a list of:
         {"line": int, "instruction": str, "arguments": str, "raw": str}
-    
-    Handles multi-line instructions (backslash continuation).
     """
     global _parsed_instructions
     
-    filepath = path or _dockerfile_path
-    if filepath is None:
+    target = image_name or _target_image
+    if target is None:
         return None
 
-    if _parsed_instructions is not None and path is None:
+    if _parsed_instructions is not None and image_name is None:
         return _parsed_instructions
 
-    filepath = Path(filepath)
-    if not filepath.exists():
-        logger.debug(f"Dockerfile not found: {filepath}")
-        return None
-
     try:
-        content = filepath.read_text(encoding='utf-8')
-    except Exception as e:
-        logger.debug(f"Failed to read Dockerfile: {e}")
+        # Get history newest to oldest
+        result = subprocess.run(
+            ["docker", "history", "--no-trunc", "--format", "{{.CreatedBy}}", target],
+            capture_output=True, text=True, check=True
+        )
+    except subprocess.CalledProcessError as e:
+        logger.debug(f"Failed to get history for image {target}: {e}")
         return None
 
     instructions = []
-    lines = content.splitlines()
+    # Reverse so it's oldest to newest (like a Dockerfile)
+    lines = result.stdout.strip().splitlines()[::-1]
     
-    i = 0
-    while i < len(lines):
-        line = lines[i].strip()
-        
-        # Skip empty lines and comments
-        if not line or line.startswith('#'):
-            i += 1
+    for i, raw_line in enumerate(lines):
+        line = raw_line.strip()
+        if not line:
             continue
 
-        # Handle multi-line (backslash continuation)
-        raw_line = line
-        line_num = i + 1
-        while line.endswith('\\') and i + 1 < len(lines):
-            i += 1
-            continuation = lines[i].strip()
-            raw_line += '\n' + continuation
-            line = line[:-1].rstrip() + ' ' + continuation
+        # Clean up some buildkit noise
+        if line.endswith("# buildkit"):
+            line = line[:-10].strip()
 
-        # Parse instruction and arguments
-        match = re.match(r'^(\w+)\s*(.*)', line, re.DOTALL)
-        if match:
-            instruction = match.group(1).upper()
-            arguments = match.group(2).strip()
-            instructions.append({
-                "line": line_num,
-                "instruction": instruction,
-                "arguments": arguments,
-                "raw": raw_line,
-            })
+        # Some history entries are just commands without Dockerfile instructions (like bash commands).
+        # We try to infer or normalize them.
+        instruction = "UNKNOWN"
+        arguments = line
 
-        i += 1
+        # If it starts with standard Dockerfile instructions
+        parts = line.split(maxsplit=1)
+        if parts and parts[0].upper() in (
+            "CMD", "ENTRYPOINT", "EXPOSE", "ENV", "ADD", "COPY", "VOLUME", "USER", "WORKDIR", "ARG", "ONBUILD", "STOPSIGNAL", "HEALTHCHECK", "SHELL", "LABEL", "MAINTAINER", "RUN"
+        ):
+            instruction = parts[0].upper()
+            arguments = parts[1] if len(parts) > 1 else ""
+        elif line.startswith("#(nop)"):
+            # Older docker formats #(nop) CMD ["/bin/sh"]
+            nop_line = line.replace("#(nop)", "").strip()
+            parts = nop_line.split(maxsplit=1)
+            if parts and parts[0].upper() in ("CMD", "ENTRYPOINT", "EXPOSE", "ENV", "ADD", "COPY", "VOLUME", "USER", "WORKDIR", "ARG", "ONBUILD", "STOPSIGNAL", "HEALTHCHECK", "SHELL", "LABEL", "MAINTAINER", "RUN"):
+                instruction = parts[0].upper()
+                arguments = parts[1] if len(parts) > 1 else ""
+        elif line.startswith("/bin/sh -c") or line.startswith("/bin/bash -c"):
+            # It's a RUN command where the instruction isn't explicit
+            instruction = "RUN"
+            arguments = line
 
-    if path is None:
+        instructions.append({
+            "line": i + 1,  # Synthetic line number based on history order
+            "instruction": instruction,
+            "arguments": arguments,
+            "raw": raw_line,
+        })
+
+    if image_name is None:
         _parsed_instructions = instructions
     
     return instructions
+

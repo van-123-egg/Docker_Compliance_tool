@@ -43,6 +43,16 @@ SEVERITY_MAP = {
     "IMG-04":        "LOW",
     "IMG-05":        "LOW",
     "IMG-06":        "CRITICAL",
+
+    # Dockerfile Security
+    "DL-01":         "MEDIUM",
+    "DL-02":         "HIGH",
+    "DL-03":         "LOW",
+    "DL-04":         "HIGH",
+    "DL-05":         "LOW",
+    "DL-06":         "LOW",
+    "DL-07":         "MEDIUM",
+    "DL-08":         "CRITICAL",
 }
 
 
@@ -272,6 +282,69 @@ REMEDIATION_MAP = {
             "  docker build --no-cache -t myapp:latest ."
         ),
         "reference": "CIS Docker Benchmark v1.6.0, Section 4.4"
+    },
+
+    # --- Dockerfile Security ---
+    "DL-01": {
+        "fix": (
+            "Use a specific version tag in the FROM instruction:\n"
+            "  FROM ubuntu:24.04\n"
+            "Instead of:\n"
+            "  FROM ubuntu:latest"
+        ),
+        "reference": "CIS Docker Benchmark v1.6.0, Section 4.2"
+    },
+    "DL-02": {
+        "fix": (
+            "Add a USER instruction to your Dockerfile to run as a non-root user:\n"
+            "  RUN groupadd -r appuser && useradd -r -g appuser appuser\n"
+            "  USER appuser"
+        ),
+        "reference": "CIS Docker Benchmark v1.6.0, Section 4.1"
+    },
+    "DL-03": {
+        "fix": (
+            "Use COPY instead of ADD unless you specifically need to extract a tar file.\n"
+            "For downloading remote files, use curl or wget inside a RUN instruction:\n"
+            "  RUN curl -fsSL https://example.com/file.tar.gz | tar -xz"
+        ),
+        "reference": "CIS Docker Benchmark v1.6.0, Section 4.9"
+    },
+    "DL-04": {
+        "fix": (
+            "Remove the EXPOSE 22 instruction from the Dockerfile.\n"
+            "Do not install or run SSH inside a container."
+        ),
+        "reference": "CIS Docker Benchmark v1.6.0, Section 4.10"
+    },
+    "DL-05": {
+        "fix": (
+            "Add --no-install-recommends to your apt-get install commands:\n"
+            "  RUN apt-get update && apt-get install -y --no-install-recommends <package>"
+        ),
+        "reference": "Docker Security Best Practices"
+    },
+    "DL-06": {
+        "fix": (
+            "Add a HEALTHCHECK instruction to your Dockerfile:\n"
+            "  HEALTHCHECK --interval=5m --timeout=3s \\\n"
+            "    CMD curl -f http://localhost/ || exit 1"
+        ),
+        "reference": "CIS Docker Benchmark v1.6.0, Section 4.6"
+    },
+    "DL-07": {
+        "fix": (
+            "Combine apt-get update and apt-get install into a single RUN instruction:\n"
+            "  RUN apt-get update && apt-get install -y <packages>"
+        ),
+        "reference": "CIS Docker Benchmark v1.6.0, Section 4.7"
+    },
+    "DL-08": {
+        "fix": (
+            "Remove secrets from ENV instructions in the Dockerfile.\n"
+            "Use Docker Secrets, environment variables at runtime, or a secret manager."
+        ),
+        "reference": "CIS Docker Benchmark v1.6.0, Section 4.11"
     },
 }
 

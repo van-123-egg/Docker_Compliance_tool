@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Docker CIS Compliance Report — 2026-04-29 12:35:38</title>
+    <title>Docker CIS Compliance Report — 2026-04-29 15:29:07</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -51,7 +52,34 @@ body {
     align-items: center;
 }
 
-.score-gauge { text-align: center; }
+.score-gauge {
+    text-align: center;
+    position: relative;
+    width: 180px;
+    height: 180px;
+}
+
+.score-gauge canvas { display: block; }
+
+.score-gauge .score-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.score-gauge .score-number {
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.score-gauge .score-label {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
 
 .stats-grid {
     display: grid;
@@ -88,13 +116,18 @@ body {
     border-radius: 16px;
     border: 1px solid #334155;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .chart-card h3 { font-size: 15px; color: #94a3b8; margin-bottom: 16px; font-weight: 500; }
 
-.legend { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
-.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #94a3b8; }
-.legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.chart-container {
+    position: relative;
+    width: 280px;
+    height: 280px;
+}
 
 .suite-section {
     margin-bottom: 24px;
@@ -201,45 +234,79 @@ tr:hover td { background: rgba(51, 65, 85, 0.2); }
 <div class="container">
     <div class="header">
         <h1>Docker CIS Compliance Report</h1>
-        <p class="meta">Generated on 2026-04-29 12:35:38</p>
+        <p class="meta">Generated on 2026-04-29 15:29:07</p>
     </div>
 
     <div class="dashboard">
-        <div class="score-gauge"><svg viewBox="0 0 180 180" width="180" height="180" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="90.0" cy="90.0" r="75.0" fill="none" stroke="#1e293b" stroke-width="12" />
-  <circle cx="90.0" cy="90.0" r="75.0" fill="none" stroke="#ef4444" stroke-width="12"
-    stroke-dasharray="471.23889803846896" stroke-dashoffset="282.7433388230814"
-    stroke-linecap="round" transform="rotate(-90 90.0 90.0)"
-    style="transition: stroke-dashoffset 1s ease-in-out;" />
-  <text x="90.0" y="82.0" text-anchor="middle" fill="#ef4444" font-size="36" font-weight="bold" font-family="Inter, sans-serif">40%</text>
-  <text x="90.0" y="108.0" text-anchor="middle" fill="#94a3b8" font-size="12" font-family="Inter, sans-serif">Compliance</text>
-</svg></div>
+        <div class="score-gauge">
+            <canvas id="scoreGauge" width="180" height="180"></canvas>
+            <div class="score-text">
+                <div class="score-number" style="color:#f59e0b;">58%</div>
+                <div class="score-label">Compliance</div>
+            </div>
+        </div>
         <div class="stats-grid">
-            <div class="stat-card stat-pass"><div class="number">2</div><div class="label">Passed</div></div>
-            <div class="stat-card stat-fail"><div class="number">3</div><div class="label">Failed</div></div>
-            <div class="stat-card stat-warn"><div class="number">0</div><div class="label">Warnings</div></div>
-            <div class="stat-card stat-na"><div class="number">1</div><div class="label">N/A</div></div>
+            <div class="stat-card stat-pass"><div class="number">31</div><div class="label">Passed</div></div>
+            <div class="stat-card stat-fail"><div class="number">22</div><div class="label">Failed</div></div>
+            <div class="stat-card stat-warn"><div class="number">4</div><div class="label">Warnings</div></div>
+            <div class="stat-card stat-na"><div class="number">11</div><div class="label">N/A</div></div>
         </div>
     </div>
 
     <div class="charts-row">
         <div class="chart-card">
             <h3>Status Distribution</h3>
-            <svg viewBox="0 0 180 180" width="180" height="180" xmlns="http://www.w3.org/2000/svg">
-<path d="M 90.0,90.0 L 90.0,10.0 A 80.0,80.0 0 0,1 159.2820323027551,130.0 Z" fill="#22c55e" />
-<path d="M 90.0,90.0 L 159.2820323027551,130.0 A 80.0,80.0 0 0,1 20.717967697244916,49.99999999999999 Z" fill="#ef4444" />
-<path d="M 90.0,90.0 L 20.717967697244916,49.99999999999999 A 80.0,80.0 0 0,1 89.99999999999999,10.0 Z" fill="#64748b" />
-</svg>
-            <div class="legend"><span class="legend-item"><span class="legend-dot" style="background:#22c55e;"></span>Pass</span><span class="legend-item"><span class="legend-dot" style="background:#ef4444;"></span>Fail</span><span class="legend-item"><span class="legend-dot" style="background:#64748b;"></span>N/A</span></div>
+            <div class="chart-container">
+                <canvas id="statusPie"></canvas>
+            </div>
         </div>
         <div class="chart-card">
             <h3>Failures by Severity</h3>
-            <div style="padding:20px 10px;"><div style="display:flex;align-items:center;gap:10px;margin:6px 0;"><span style="width:70px;font-size:11px;color:#94a3b8;text-align:right;">HIGH</span><div style="flex:1;background:#0f172a;border-radius:4px;height:20px;"><div style="width:50.0%;background:#f97316;height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;font-size:11px;font-weight:600;min-width:30px;">1</div></div></div>
-<div style="display:flex;align-items:center;gap:10px;margin:6px 0;"><span style="width:70px;font-size:11px;color:#94a3b8;text-align:right;">MEDIUM</span><div style="flex:1;background:#0f172a;border-radius:4px;height:20px;"><div style="width:100.0%;background:#f59e0b;height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;font-size:11px;font-weight:600;min-width:30px;">2</div></div></div></div>
+            <div class="chart-container">
+                <canvas id="severityBar"></canvas>
+            </div>
         </div>
     </div>
 
-    <details class="suite-section" open><summary>Image Security <span style="color:#64748b;font-size:13px;font-weight:400;">(2/6 passed)</span></summary><table><thead><tr><th>Control</th><th>Severity</th><th>Status</th><th>Description</th><th>Details</th></tr></thead><tbody><tr><td><strong>IMG-03</strong></td><td><span class="badge" style="background:#f97316;">HIGH</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure Content Trust for Docker is enabled</td><td>DOCKER_CONTENT_TRUST is not set. Image pulls are not signature-verified.</td></tr><tr><td><strong>IMG-04</strong></td><td><span class="badge" style="background:#3b82f6;">LOW</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure there are no dangling images</td><td>No dangling images found.</td></tr><tr><td><strong>IMG-05</strong></td><td><span class="badge" style="background:#3b82f6;">LOW</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure Docker images are not excessively large</td><td>All images are under 1.00 GB.</td></tr><tr><td><strong>IMG-01</strong></td><td><span class="badge" style="background:#f59e0b;">MEDIUM</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure images are not tagged with &#x27;latest&#x27;</td><td>Images using latest/untagged: project-3_team_34-service:latest, postgres:latest, alpine:latest</td></tr><tr><td><strong>IMG-02</strong></td><td><span class="badge" style="background:#f59e0b;">MEDIUM</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure Docker images are not outdated</td><td>Stale images (&gt;90d): alpine:latest (91d old)</td></tr><tr><td><strong>IMG-06</strong></td><td><span class="badge" style="background:#ef4444;">CRITICAL</span></td><td><span class="badge" style="background:#64748b;">N/A</span></td><td>Ensure Docker images are scanned for vulnerabilities</td><td>Scanner execution failed for &#x27;project-3_team_34-service:latest&#x27;. Ensure Docker Scout or Trivy is properly configured.</td></tr></tbody></table><div class="remediation-box"><div class="rem-title">Remediation for IMG-03: Ensure Content Trust for Docker is enabled</div><pre>Enable Docker Content Trust:
+    <details class="suite-section" open><summary>Host Configuration <span style="color:#64748b;font-size:13px;font-weight:400;">(0/2 passed)</span></summary><table><thead><tr><th>Control</th><th>Severity</th><th>Status</th><th>Description</th><th>Details</th></tr></thead><tbody><tr><td><strong>1.2.1</strong></td><td><span class="badge" style="background:#f97316;">HIGH</span></td><td><span class="badge" style="background:#a855f7;">ERROR</span></td><td>Ensure auditing is configured for the Docker daemon</td><td>Command &#x27;[&#x27;auditpol&#x27;, &#x27;/get&#x27;, &#x27;/category:Detailed Tracking&#x27;]&#x27; returned non-zero exit status 1314.</td></tr><tr><td><strong>1.1.2</strong></td><td><span class="badge" style="background:#f97316;">HIGH</span></td><td><span class="badge" style="background:#06b6d4;">MANUAL_REVIEW</span></td><td>Ensure only trusted users are allowed to control Docker daemon</td><td>Users in docker group: HP</td></tr></tbody></table></details>
+<details class="suite-section" open><summary>Daemon Configuration <span style="color:#64748b;font-size:13px;font-weight:400;">(1/4 passed)</span></summary><table><thead><tr><th>Control</th><th>Severity</th><th>Status</th><th>Description</th><th>Details</th></tr></thead><tbody><tr><td><strong>2.4</strong></td><td><span class="badge" style="background:#f97316;">HIGH</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure insecure registries are not used</td><td>Insecure registries configured: ::1/128</td></tr><tr><td><strong>Daemon_Status</strong></td><td><span class="badge" style="background:#ef4444;">CRITICAL</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure Docker daemon is running</td><td>Docker daemon is active and reachable</td></tr><tr><td><strong>2.11</strong></td><td><span class="badge" style="background:#f59e0b;">MEDIUM</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure centralized and remote logging is configured</td><td>Current logging driver: json-file</td></tr><tr><td><strong>2.6</strong></td><td><span class="badge" style="background:#ef4444;">CRITICAL</span></td><td><span class="badge" style="background:#06b6d4;">MANUAL_REVIEW</span></td><td>Ensure TLS authentication for Docker daemon is configured</td><td>TLS flags not in process args. Check daemon.json manually.</td></tr></tbody></table><div class="remediation-box"><div class="rem-title">Remediation for 2.4: Ensure insecure registries are not used</div><pre>Remove insecure registries from /etc/docker/daemon.json:
+  Remove the &quot;insecure-registries&quot; key or set it to an empty list:
+  {&quot;insecure-registries&quot;: []}
+Then restart Docker: sudo systemctl restart docker</pre><div class=ref>Ref: CIS Docker Benchmark v1.6.0, Section 2.4</div></div><div class="remediation-box"><div class="rem-title">Remediation for 2.11: Ensure centralized and remote logging is configured</div><pre>Configure a remote logging driver in /etc/docker/daemon.json:
+  {&quot;log-driver&quot;: &quot;syslog&quot;, &quot;log-opts&quot;: {&quot;syslog-address&quot;: &quot;tcp://your-log-server:514&quot;}}
+Other options: splunk, gelf, fluentd, awslogs
+Then restart Docker: sudo systemctl restart docker</pre><div class=ref>Ref: CIS Docker Benchmark v1.6.0, Section 2.11</div></div></details>
+<details class="suite-section" open><summary>Socket Configuration <span style="color:#64748b;font-size:13px;font-weight:400;">(0/4 passed)</span></summary><table><thead><tr><th>Control</th><th>Severity</th><th>Status</th><th>Description</th><th>Details</th></tr></thead><tbody><tr><td><strong>3.15</strong></td><td><span class="badge" style="background:#f97316;">HIGH</span></td><td><span class="badge" style="background:#64748b;">N/A</span></td><td>Ensure that the Docker socket file ownership is set to root:docker</td><td>Socket not found</td></tr><tr><td><strong>3.16</strong></td><td><span class="badge" style="background:#f97316;">HIGH</span></td><td><span class="badge" style="background:#64748b;">N/A</span></td><td>Ensure that the Docker socket file permissions are set to 660 or more restrictively</td><td>Socket not found</td></tr><tr><td><strong>3.3</strong></td><td><span class="badge" style="background:#f59e0b;">MEDIUM</span></td><td><span class="badge" style="background:#64748b;">N/A</span></td><td>Ensure that docker.socket file ownership is set to root:root</td><td>File not found</td></tr><tr><td><strong>3.4</strong></td><td><span class="badge" style="background:#f59e0b;">MEDIUM</span></td><td><span class="badge" style="background:#64748b;">N/A</span></td><td>Ensure that docker.socket file permissions are set to 644 or more restrictive</td><td>File not found</td></tr></tbody></table></details>
+<details class="suite-section" open><summary>Container Runtime <span style="color:#64748b;font-size:13px;font-weight:400;">(0/7 passed)</span></summary><table><thead><tr><th>Control</th><th>Severity</th><th>Status</th><th>Description</th><th>Details</th></tr></thead><tbody><tr><td><strong>5.32</strong></td><td><span class="badge" style="background:#ef4444;">CRITICAL</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure that the Docker socket is not mounted inside any containers</td><td>Containers mounting docker.sock: cis_test_vulnerable</td></tr><tr><td><strong>5.10</strong></td><td><span class="badge" style="background:#ef4444;">CRITICAL</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure that the host&#x27;s network namespace is not shared</td><td>Containers using host network: cis_test_vulnerable</td></tr><tr><td><strong>5.11</strong></td><td><span class="badge" style="background:#f97316;">HIGH</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure that the memory usage for containers is limited</td><td>Containers without memory limits: cis_test_vulnerable</td></tr><tr><td><strong>5.5</strong></td><td><span class="badge" style="background:#ef4444;">CRITICAL</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure that privileged containers are not used</td><td>Privileged containers: cis_test_vulnerable</td></tr><tr><td><strong>4.1</strong></td><td><span class="badge" style="background:#f97316;">HIGH</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure that a user for the container has been created (Non-root)</td><td>Running as root: cis_test_vulnerable</td></tr><tr><td><strong>5.13</strong></td><td><span class="badge" style="background:#f59e0b;">MEDIUM</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure that the container&#x27;s root filesystem is mounted as read only</td><td>Containers with writable rootfs: cis_test_vulnerable</td></tr><tr><td><strong>5.6</strong></td><td><span class="badge" style="background:#ef4444;">CRITICAL</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure sensitive host system directories are not mounted</td><td>Violations: {&#x27;cis_test_vulnerable&#x27;: [&#x27;/&#x27;]}</td></tr></tbody></table><div class="remediation-box"><div class="rem-title">Remediation for 5.32: Ensure that the Docker socket is not mounted inside any containers</div><pre>Do NOT mount the Docker socket inside containers:
+  Remove -v /var/run/docker.sock:/var/run/docker.sock from your docker run command.
+If you need Docker API access, use a restricted proxy like docker-socket-proxy:
+  docker run -v /var/run/docker.sock:/var/run/docker.sock tecnativa/docker-socket-proxy</pre><div class=ref>Ref: CIS Docker Benchmark v1.6.0, Section 5.32</div></div><div class="remediation-box"><div class="rem-title">Remediation for 5.10: Ensure that the host&#x27;s network namespace is not shared</div><pre>Do NOT use --network=host. Use bridge (default) or custom networks:
+  docker run --network=bridge &lt;image&gt;
+Or create a custom network:
+  docker network create mynet
+  docker run --network=mynet &lt;image&gt;</pre><div class=ref>Ref: CIS Docker Benchmark v1.6.0, Section 5.10</div></div><div class="remediation-box"><div class="rem-title">Remediation for 5.11: Ensure that the memory usage for containers is limited</div><pre>Set memory limits when running containers:
+  docker run --memory=512m --memory-swap=1g &lt;image&gt;
+In docker-compose.yml:
+  deploy:
+    resources:
+      limits:
+        memory: 512M</pre><div class=ref>Ref: CIS Docker Benchmark v1.6.0, Section 5.11</div></div><div class="remediation-box"><div class="rem-title">Remediation for 5.5: Ensure that privileged containers are not used</div><pre>Do NOT use the --privileged flag. Instead, grant only specific capabilities:
+  docker run --cap-drop ALL --cap-add NET_BIND_SERVICE &lt;image&gt;
+If a container currently uses --privileged, re-create it without that flag:
+  docker stop &lt;container&gt; &amp;&amp; docker rm &lt;container&gt;
+  docker run --cap-drop ALL --cap-add &lt;NEEDED_CAP&gt; &lt;image&gt;</pre><div class=ref>Ref: CIS Docker Benchmark v1.6.0, Section 5.5</div></div><div class="remediation-box"><div class="rem-title">Remediation for 4.1: Ensure that a user for the container has been created (Non-root)</div><pre>Always specify a non-root user in your Dockerfile:
+  RUN useradd -r appuser
+  USER appuser
+Or pass --user at runtime:
+  docker run --user 1000:1000 &lt;image&gt;</pre><div class=ref>Ref: CIS Docker Benchmark v1.6.0, Section 4.1</div></div><div class="remediation-box"><div class="rem-title">Remediation for 5.13: Ensure that the container&#x27;s root filesystem is mounted as read only</div><pre>Run containers with a read-only root filesystem:
+  docker run --read-only &lt;image&gt;
+Use tmpfs for writable directories:
+  docker run --read-only --tmpfs /tmp --tmpfs /run &lt;image&gt;</pre><div class=ref>Ref: CIS Docker Benchmark v1.6.0, Section 5.13</div></div><div class="remediation-box"><div class="rem-title">Remediation for 5.6: Ensure sensitive host system directories are not mounted</div><pre>Do NOT mount sensitive host directories. Remove volume mounts for:
+  /, /boot, /dev, /etc, /lib, /proc, /sys, /usr
+Use named volumes instead of host bind mounts:
+  docker volume create app-data
+  docker run -v app-data:/app/data &lt;image&gt;</pre><div class=ref>Ref: CIS Docker Benchmark v1.6.0, Section 5.6</div></div></details>
+<details class="suite-section" open><summary>Image Security <span style="color:#64748b;font-size:13px;font-weight:400;">(2/6 passed)</span></summary><table><thead><tr><th>Control</th><th>Severity</th><th>Status</th><th>Description</th><th>Details</th></tr></thead><tbody><tr><td><strong>IMG-03</strong></td><td><span class="badge" style="background:#f97316;">HIGH</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure Content Trust for Docker is enabled</td><td>DOCKER_CONTENT_TRUST is not set. Image pulls are not signature-verified.</td></tr><tr><td><strong>IMG-04</strong></td><td><span class="badge" style="background:#3b82f6;">LOW</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure there are no dangling images</td><td>No dangling images found.</td></tr><tr><td><strong>IMG-05</strong></td><td><span class="badge" style="background:#3b82f6;">LOW</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure Docker images are not excessively large</td><td>All images are under 1.00 GB.</td></tr><tr><td><strong>IMG-01</strong></td><td><span class="badge" style="background:#f59e0b;">MEDIUM</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure images are not tagged with &#x27;latest&#x27;</td><td>Images using latest/untagged: test_env-vulnerable-app:latest, test_env-secure-app:latest, project-3_team_34-service:latest, postgres:latest, nginx:latest, alpine:latest</td></tr><tr><td><strong>IMG-02</strong></td><td><span class="badge" style="background:#f59e0b;">MEDIUM</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure Docker images are not outdated</td><td>Stale images (&gt;90d): alpine:latest (91d old)</td></tr><tr><td><strong>IMG-06</strong></td><td><span class="badge" style="background:#ef4444;">CRITICAL</span></td><td><span class="badge" style="background:#64748b;">N/A</span></td><td>Ensure Docker images are scanned for vulnerabilities</td><td>Scanner execution failed for &#x27;test_env-vulnerable-app:latest&#x27;. Ensure Docker Scout or Trivy is properly configured.</td></tr></tbody></table><div class="remediation-box"><div class="rem-title">Remediation for IMG-03: Ensure Content Trust for Docker is enabled</div><pre>Enable Docker Content Trust:
   export DOCKER_CONTENT_TRUST=1
 To make it permanent, add to your shell profile (~/.bashrc or ~/.profile):
   echo &#x27;export DOCKER_CONTENT_TRUST=1&#x27; &gt;&gt; ~/.bashrc
@@ -253,10 +320,166 @@ Re-tag existing images:
   docker pull &lt;base-image&gt;:&lt;tag&gt;
   docker build --no-cache -t myapp:latest .
 Set up a CI/CD pipeline to rebuild images on a schedule (e.g., weekly).</pre><div class=ref>Ref: Docker Security Best Practices — Image Freshness</div></div></details>
+<details class="suite-section" open><summary>Dockerfile Security <span style="color:#64748b;font-size:13px;font-weight:400;">(28/48 passed)</span></summary><table><thead><tr><th>Control</th><th>Severity</th><th>Status</th><th>Description</th><th>Details</th></tr></thead><tbody><tr><td><strong>DL-03</strong></td><td><span class="badge" style="background:#3b82f6;">LOW</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure ADD is not used for remote URLs</td><td>[Image 78481659c47e] No ADD instructions found. COPY is used correctly.</td></tr><tr><td><strong>DL-05</strong></td><td><span class="badge" style="background:#3b82f6;">LOW</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure apt-get uses --no-install-recommends</td><td>[Image 78481659c47e] All apt-get install commands use --no-install-recommends.</td></tr><tr><td><strong>DL-04</strong></td><td><span class="badge" style="background:#f97316;">HIGH</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure SSH port 22 is not exposed</td><td>[Image 78481659c47e] Port 22 is not exposed.</td></tr><tr><td><strong>DL-01</strong></td><td><span class="badge" style="background:#f59e0b;">MEDIUM</span></td><td><span class="badge" style="background:#64748b;">N/A</span></td><td>Ensure FROM does not use :latest tag</td><td>[Image 78481659c47e] FROM instructions are not preserved in image history. See Image Security checks (IMG-01) for tag validation.</td></tr><tr><td><strong>DL-06</strong></td><td><span class="badge" style="background:#3b82f6;">LOW</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure HEALTHCHECK instructions have been added to container images</td><td>[Image 78481659c47e] No HEALTHCHECK instruction found.</td></tr><tr><td><strong>DL-02</strong></td><td><span class="badge" style="background:#f97316;">HIGH</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure a non-root USER is specified</td><td>[Image 78481659c47e] No USER instruction found. Container will run as root by default.</td></tr><tr><td><strong>DL-08</strong></td><td><span class="badge" style="background:#ef4444;">CRITICAL</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure secrets are not stored in Dockerfile ENV instructions</td><td>[Image 78481659c47e] No secrets found in ENV instructions.</td></tr><tr><td><strong>DL-07</strong></td><td><span class="badge" style="background:#f59e0b;">MEDIUM</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure update instructions are not used alone</td><td>[Image 78481659c47e] No isolated update instructions found.</td></tr><tr><td><strong>DL-03</strong></td><td><span class="badge" style="background:#3b82f6;">LOW</span></td><td><span class="badge" style="background:#f59e0b;">WARN</span></td><td>Ensure ADD is not used for remote URLs</td><td>[Image 3a44c13c4be3] ADD instructions found (use COPY for local files, curl/wget for remote): Line 15: ADD used instead of COPY</td></tr><tr><td><strong>DL-05</strong></td><td><span class="badge" style="background:#3b82f6;">LOW</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure apt-get uses --no-install-recommends</td><td>[Image 3a44c13c4be3] All apt-get install commands use --no-install-recommends.</td></tr><tr><td><strong>DL-04</strong></td><td><span class="badge" style="background:#f97316;">HIGH</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure SSH port 22 is not exposed</td><td>[Image 3a44c13c4be3] Port 22 is not exposed.</td></tr><tr><td><strong>DL-01</strong></td><td><span class="badge" style="background:#f59e0b;">MEDIUM</span></td><td><span class="badge" style="background:#64748b;">N/A</span></td><td>Ensure FROM does not use :latest tag</td><td>[Image 3a44c13c4be3] FROM instructions are not preserved in image history. See Image Security checks (IMG-01) for tag validation.</td></tr><tr><td><strong>DL-06</strong></td><td><span class="badge" style="background:#3b82f6;">LOW</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure HEALTHCHECK instructions have been added to container images</td><td>[Image 3a44c13c4be3] No HEALTHCHECK instruction found.</td></tr><tr><td><strong>DL-02</strong></td><td><span class="badge" style="background:#f97316;">HIGH</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure a non-root USER is specified</td><td>[Image 3a44c13c4be3] No USER instruction found. Container will run as root by default.</td></tr><tr><td><strong>DL-08</strong></td><td><span class="badge" style="background:#ef4444;">CRITICAL</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure secrets are not stored in Dockerfile ENV instructions</td><td>[Image 3a44c13c4be3] No ENV instructions found.</td></tr><tr><td><strong>DL-07</strong></td><td><span class="badge" style="background:#f59e0b;">MEDIUM</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure update instructions are not used alone</td><td>[Image 3a44c13c4be3] No isolated update instructions found.</td></tr><tr><td><strong>DL-03</strong></td><td><span class="badge" style="background:#3b82f6;">LOW</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure ADD is not used for remote URLs</td><td>[Image 6e23479198b9] No ADD instructions found. COPY is used correctly.</td></tr><tr><td><strong>DL-05</strong></td><td><span class="badge" style="background:#3b82f6;">LOW</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure apt-get uses --no-install-recommends</td><td>[Image 6e23479198b9] All apt-get install commands use --no-install-recommends.</td></tr><tr><td><strong>DL-04</strong></td><td><span class="badge" style="background:#f97316;">HIGH</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure SSH port 22 is not exposed</td><td>[Image 6e23479198b9] Port 22 is not exposed.</td></tr><tr><td><strong>DL-01</strong></td><td><span class="badge" style="background:#f59e0b;">MEDIUM</span></td><td><span class="badge" style="background:#64748b;">N/A</span></td><td>Ensure FROM does not use :latest tag</td><td>[Image 6e23479198b9] FROM instructions are not preserved in image history. See Image Security checks (IMG-01) for tag validation.</td></tr><tr><td><strong>DL-06</strong></td><td><span class="badge" style="background:#3b82f6;">LOW</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure HEALTHCHECK instructions have been added to container images</td><td>[Image 6e23479198b9] No HEALTHCHECK instruction found.</td></tr><tr><td><strong>DL-02</strong></td><td><span class="badge" style="background:#f97316;">HIGH</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure a non-root USER is specified</td><td>[Image 6e23479198b9] No USER instruction found. Container will run as root by default.</td></tr><tr><td><strong>DL-08</strong></td><td><span class="badge" style="background:#ef4444;">CRITICAL</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure secrets are not stored in Dockerfile ENV instructions</td><td>[Image 6e23479198b9] No secrets found in ENV instructions.</td></tr><tr><td><strong>DL-07</strong></td><td><span class="badge" style="background:#f59e0b;">MEDIUM</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure update instructions are not used alone</td><td>[Image 6e23479198b9] No isolated update instructions found.</td></tr><tr><td><strong>DL-03</strong></td><td><span class="badge" style="background:#3b82f6;">LOW</span></td><td><span class="badge" style="background:#f59e0b;">WARN</span></td><td>Ensure ADD is not used for remote URLs</td><td>[Image 55ecfa64be1c] ADD instructions found (use COPY for local files, curl/wget for remote): Line 3: ADD used instead of COPY</td></tr><tr><td><strong>DL-05</strong></td><td><span class="badge" style="background:#3b82f6;">LOW</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure apt-get uses --no-install-recommends</td><td>[Image 55ecfa64be1c] No apt-get install commands found.</td></tr><tr><td><strong>DL-04</strong></td><td><span class="badge" style="background:#f97316;">HIGH</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure SSH port 22 is not exposed</td><td>[Image 55ecfa64be1c] Port 22 is not exposed.</td></tr><tr><td><strong>DL-01</strong></td><td><span class="badge" style="background:#f59e0b;">MEDIUM</span></td><td><span class="badge" style="background:#64748b;">N/A</span></td><td>Ensure FROM does not use :latest tag</td><td>[Image 55ecfa64be1c] FROM instructions are not preserved in image history. See Image Security checks (IMG-01) for tag validation.</td></tr><tr><td><strong>DL-06</strong></td><td><span class="badge" style="background:#3b82f6;">LOW</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure HEALTHCHECK instructions have been added to container images</td><td>[Image 55ecfa64be1c] No HEALTHCHECK instruction found.</td></tr><tr><td><strong>DL-02</strong></td><td><span class="badge" style="background:#f97316;">HIGH</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure a non-root USER is specified</td><td>[Image 55ecfa64be1c] No USER instruction found. Container will run as root by default.</td></tr><tr><td><strong>DL-08</strong></td><td><span class="badge" style="background:#ef4444;">CRITICAL</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure secrets are not stored in Dockerfile ENV instructions</td><td>[Image 55ecfa64be1c] No secrets found in ENV instructions.</td></tr><tr><td><strong>DL-07</strong></td><td><span class="badge" style="background:#f59e0b;">MEDIUM</span></td><td><span class="badge" style="background:#f59e0b;">WARN</span></td><td>Ensure update instructions are not used alone</td><td>[Image 55ecfa64be1c] Isolated update commands found: Line 5: apk update used without add/upgrade</td></tr><tr><td><strong>DL-03</strong></td><td><span class="badge" style="background:#3b82f6;">LOW</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure ADD is not used for remote URLs</td><td>[Image bba7ab5676b6] No ADD instructions found. COPY is used correctly.</td></tr><tr><td><strong>DL-05</strong></td><td><span class="badge" style="background:#3b82f6;">LOW</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure apt-get uses --no-install-recommends</td><td>[Image bba7ab5676b6] No apt-get install commands found.</td></tr><tr><td><strong>DL-04</strong></td><td><span class="badge" style="background:#f97316;">HIGH</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure SSH port 22 is not exposed</td><td>[Image bba7ab5676b6] No EXPOSE instructions found.</td></tr><tr><td><strong>DL-01</strong></td><td><span class="badge" style="background:#f59e0b;">MEDIUM</span></td><td><span class="badge" style="background:#64748b;">N/A</span></td><td>Ensure FROM does not use :latest tag</td><td>[Image bba7ab5676b6] FROM instructions are not preserved in image history. See Image Security checks (IMG-01) for tag validation.</td></tr><tr><td><strong>DL-06</strong></td><td><span class="badge" style="background:#3b82f6;">LOW</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure HEALTHCHECK instructions have been added to container images</td><td>[Image bba7ab5676b6] HEALTHCHECK instruction found (line 6).</td></tr><tr><td><strong>DL-02</strong></td><td><span class="badge" style="background:#f97316;">HIGH</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure a non-root USER is specified</td><td>[Image bba7ab5676b6] Non-root USER &#x27;appuser&#x27; is set (line 8).</td></tr><tr><td><strong>DL-08</strong></td><td><span class="badge" style="background:#ef4444;">CRITICAL</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure secrets are not stored in Dockerfile ENV instructions</td><td>[Image bba7ab5676b6] No ENV instructions found.</td></tr><tr><td><strong>DL-07</strong></td><td><span class="badge" style="background:#f59e0b;">MEDIUM</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure update instructions are not used alone</td><td>[Image bba7ab5676b6] No isolated update instructions found.</td></tr><tr><td><strong>DL-03</strong></td><td><span class="badge" style="background:#3b82f6;">LOW</span></td><td><span class="badge" style="background:#f59e0b;">WARN</span></td><td>Ensure ADD is not used for remote URLs</td><td>[Image 25109184c71b] ADD instructions found (use COPY for local files, curl/wget for remote): Line 1: ADD used instead of COPY</td></tr><tr><td><strong>DL-05</strong></td><td><span class="badge" style="background:#3b82f6;">LOW</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure apt-get uses --no-install-recommends</td><td>[Image 25109184c71b] No RUN instructions found.</td></tr><tr><td><strong>DL-04</strong></td><td><span class="badge" style="background:#f97316;">HIGH</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure SSH port 22 is not exposed</td><td>[Image 25109184c71b] No EXPOSE instructions found.</td></tr><tr><td><strong>DL-01</strong></td><td><span class="badge" style="background:#f59e0b;">MEDIUM</span></td><td><span class="badge" style="background:#64748b;">N/A</span></td><td>Ensure FROM does not use :latest tag</td><td>[Image 25109184c71b] FROM instructions are not preserved in image history. See Image Security checks (IMG-01) for tag validation.</td></tr><tr><td><strong>DL-06</strong></td><td><span class="badge" style="background:#3b82f6;">LOW</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure HEALTHCHECK instructions have been added to container images</td><td>[Image 25109184c71b] No HEALTHCHECK instruction found.</td></tr><tr><td><strong>DL-02</strong></td><td><span class="badge" style="background:#f97316;">HIGH</span></td><td><span class="badge" style="background:#ef4444;">FAIL</span></td><td>Ensure a non-root USER is specified</td><td>[Image 25109184c71b] No USER instruction found. Container will run as root by default.</td></tr><tr><td><strong>DL-08</strong></td><td><span class="badge" style="background:#ef4444;">CRITICAL</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure secrets are not stored in Dockerfile ENV instructions</td><td>[Image 25109184c71b] No ENV instructions found.</td></tr><tr><td><strong>DL-07</strong></td><td><span class="badge" style="background:#f59e0b;">MEDIUM</span></td><td><span class="badge" style="background:#22c55e;">PASS</span></td><td>Ensure update instructions are not used alone</td><td>[Image 25109184c71b] No RUN instructions found.</td></tr></tbody></table><div class="remediation-box"><div class="rem-title">Remediation for DL-06: Ensure HEALTHCHECK instructions have been added to container images</div><pre>Add a HEALTHCHECK instruction to your Dockerfile:
+  HEALTHCHECK --interval=5m --timeout=3s \
+    CMD curl -f http://localhost/ || exit 1</pre><div class=ref>Ref: CIS Docker Benchmark v1.6.0, Section 4.6</div></div><div class="remediation-box"><div class="rem-title">Remediation for DL-02: Ensure a non-root USER is specified</div><pre>Add a USER instruction to your Dockerfile to run as a non-root user:
+  RUN groupadd -r appuser &amp;&amp; useradd -r -g appuser appuser
+  USER appuser</pre><div class=ref>Ref: CIS Docker Benchmark v1.6.0, Section 4.1</div></div><div class="remediation-box"><div class="rem-title">Remediation for DL-03: Ensure ADD is not used for remote URLs</div><pre>Use COPY instead of ADD unless you specifically need to extract a tar file.
+For downloading remote files, use curl or wget inside a RUN instruction:
+  RUN curl -fsSL https://example.com/file.tar.gz | tar -xz</pre><div class=ref>Ref: CIS Docker Benchmark v1.6.0, Section 4.9</div></div><div class="remediation-box"><div class="rem-title">Remediation for DL-06: Ensure HEALTHCHECK instructions have been added to container images</div><pre>Add a HEALTHCHECK instruction to your Dockerfile:
+  HEALTHCHECK --interval=5m --timeout=3s \
+    CMD curl -f http://localhost/ || exit 1</pre><div class=ref>Ref: CIS Docker Benchmark v1.6.0, Section 4.6</div></div><div class="remediation-box"><div class="rem-title">Remediation for DL-02: Ensure a non-root USER is specified</div><pre>Add a USER instruction to your Dockerfile to run as a non-root user:
+  RUN groupadd -r appuser &amp;&amp; useradd -r -g appuser appuser
+  USER appuser</pre><div class=ref>Ref: CIS Docker Benchmark v1.6.0, Section 4.1</div></div><div class="remediation-box"><div class="rem-title">Remediation for DL-06: Ensure HEALTHCHECK instructions have been added to container images</div><pre>Add a HEALTHCHECK instruction to your Dockerfile:
+  HEALTHCHECK --interval=5m --timeout=3s \
+    CMD curl -f http://localhost/ || exit 1</pre><div class=ref>Ref: CIS Docker Benchmark v1.6.0, Section 4.6</div></div><div class="remediation-box"><div class="rem-title">Remediation for DL-02: Ensure a non-root USER is specified</div><pre>Add a USER instruction to your Dockerfile to run as a non-root user:
+  RUN groupadd -r appuser &amp;&amp; useradd -r -g appuser appuser
+  USER appuser</pre><div class=ref>Ref: CIS Docker Benchmark v1.6.0, Section 4.1</div></div><div class="remediation-box"><div class="rem-title">Remediation for DL-03: Ensure ADD is not used for remote URLs</div><pre>Use COPY instead of ADD unless you specifically need to extract a tar file.
+For downloading remote files, use curl or wget inside a RUN instruction:
+  RUN curl -fsSL https://example.com/file.tar.gz | tar -xz</pre><div class=ref>Ref: CIS Docker Benchmark v1.6.0, Section 4.9</div></div><div class="remediation-box"><div class="rem-title">Remediation for DL-06: Ensure HEALTHCHECK instructions have been added to container images</div><pre>Add a HEALTHCHECK instruction to your Dockerfile:
+  HEALTHCHECK --interval=5m --timeout=3s \
+    CMD curl -f http://localhost/ || exit 1</pre><div class=ref>Ref: CIS Docker Benchmark v1.6.0, Section 4.6</div></div><div class="remediation-box"><div class="rem-title">Remediation for DL-02: Ensure a non-root USER is specified</div><pre>Add a USER instruction to your Dockerfile to run as a non-root user:
+  RUN groupadd -r appuser &amp;&amp; useradd -r -g appuser appuser
+  USER appuser</pre><div class=ref>Ref: CIS Docker Benchmark v1.6.0, Section 4.1</div></div><div class="remediation-box"><div class="rem-title">Remediation for DL-07: Ensure update instructions are not used alone</div><pre>Combine apt-get update and apt-get install into a single RUN instruction:
+  RUN apt-get update &amp;&amp; apt-get install -y &lt;packages&gt;</pre><div class=ref>Ref: CIS Docker Benchmark v1.6.0, Section 4.7</div></div><div class="remediation-box"><div class="rem-title">Remediation for DL-03: Ensure ADD is not used for remote URLs</div><pre>Use COPY instead of ADD unless you specifically need to extract a tar file.
+For downloading remote files, use curl or wget inside a RUN instruction:
+  RUN curl -fsSL https://example.com/file.tar.gz | tar -xz</pre><div class=ref>Ref: CIS Docker Benchmark v1.6.0, Section 4.9</div></div><div class="remediation-box"><div class="rem-title">Remediation for DL-06: Ensure HEALTHCHECK instructions have been added to container images</div><pre>Add a HEALTHCHECK instruction to your Dockerfile:
+  HEALTHCHECK --interval=5m --timeout=3s \
+    CMD curl -f http://localhost/ || exit 1</pre><div class=ref>Ref: CIS Docker Benchmark v1.6.0, Section 4.6</div></div><div class="remediation-box"><div class="rem-title">Remediation for DL-02: Ensure a non-root USER is specified</div><pre>Add a USER instruction to your Dockerfile to run as a non-root user:
+  RUN groupadd -r appuser &amp;&amp; useradd -r -g appuser appuser
+  USER appuser</pre><div class=ref>Ref: CIS Docker Benchmark v1.6.0, Section 4.1</div></div></details>
 
     <div class="footer">
-        Docker CIS Benchmark Compliance Scanner &mdash; Report generated 2026-04-29 12:35:38
+        Docker CIS Benchmark Compliance Scanner &mdash; Report generated 2026-04-29 15:29:07
     </div>
 </div>
+<script>
+    // Score Gauge (Doughnut chart)
+    const scoreCtx = document.getElementById('scoreGauge').getContext('2d');
+    new Chart(scoreCtx, {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: [58, 42],
+                backgroundColor: ['#f59e0b', '#1e293b'],
+                borderWidth: 0,
+                cutout: '78%',
+            }]
+        },
+        options: {
+            responsive: false,
+            plugins: {
+                tooltip: { enabled: false },
+                legend: { display: false },
+            },
+            animation: {
+                animateRotate: true,
+                duration: 1500,
+                easing: 'easeOutQuart',
+            }
+        }
+    });
+
+    // Status Distribution Pie Chart
+    const pieCtx = document.getElementById('statusPie').getContext('2d');
+    new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ["Pass", "Fail", "Warn", "N/A", "Error"],
+            datasets: [{
+                data: [31, 22, 4, 11, 1],
+                backgroundColor: ["#22c55e", "#ef4444", "#f59e0b", "#64748b", "#a855f7"],
+                borderWidth: 2,
+                borderColor: '#0f172a',
+                hoverOffset: 8,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#94a3b8',
+                        font: { family: 'Inter', size: 12 },
+                        padding: 16,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#1e293b',
+                    titleColor: '#e2e8f0',
+                    bodyColor: '#94a3b8',
+                    borderColor: '#334155',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    padding: 12,
+                }
+            },
+            animation: {
+                animateRotate: true,
+                duration: 1200,
+                easing: 'easeOutQuart',
+            }
+        }
+    });
+
+    // Severity Bar Chart
+    const sevCtx = document.getElementById('severityBar').getContext('2d');
+    new Chart(sevCtx, {
+        type: 'bar',
+        data: {
+            labels: ["CRITICAL", "HIGH", "MEDIUM", "LOW"],
+            datasets: [{
+                label: 'Failures',
+                data: [4, 9, 4, 5],
+                backgroundColor: ["#ef4444", "#f97316", "#f59e0b", "#3b82f6"],
+                borderRadius: 6,
+                borderSkipped: false,
+                barThickness: 28,
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#1e293b',
+                    titleColor: '#e2e8f0',
+                    bodyColor: '#94a3b8',
+                    borderColor: '#334155',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: '#94a3b8',
+                        font: { family: 'Inter', size: 11 },
+                        stepSize: 1,
+                    },
+                    grid: { color: 'rgba(51,65,85,0.3)' },
+                },
+                y: {
+                    ticks: {
+                        color: '#94a3b8',
+                        font: { family: 'Inter', size: 12, weight: 'bold' },
+                    },
+                    grid: { display: false },
+                }
+            },
+            animation: {
+                duration: 1000,
+                easing: 'easeOutQuart',
+            }
+        }
+    });
+    </script>
 </body>
 </html>

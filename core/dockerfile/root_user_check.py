@@ -11,7 +11,7 @@ def run_check():
             "Control_ID": "DL-02",
             "Description": "Ensure a non-root USER is specified",
             "Status": "N/A",
-            "Details": "No Dockerfile configured. Use --dockerfile-path."
+            "Details": "No target image configured."
         }
 
     user_instructions = [i for i in instructions if i["instruction"] == "USER"]

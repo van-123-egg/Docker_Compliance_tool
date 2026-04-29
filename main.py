@@ -44,7 +44,7 @@ def load_and_run_module(package_name):
 def main():
     # 1. Setup Command Line Arguments
     parser = argparse.ArgumentParser(description="Docker CIS Benchmark Compliance Scanner")
-    parser.add_argument('--suite', choices=['host', 'daemon', 'socket', 'container', 'image', 'all'], 
+    parser.add_argument('--suite', choices=['host', 'daemon', 'socket', 'container', 'image', 'dockerfile', 'all'], 
                         default='all', help="Specific suite of checks to run")
     parser.add_argument('--format', choices=['json', 'table', 'html', 'pdf'], 
                         default='table', help="Output format (default: table)")
@@ -167,6 +167,28 @@ def _run_scan(args):
     if args.suite in ['image', 'all']:
         logger.info("Scanning Docker Images...")
         report["Image_Security"] = load_and_run_module("core.image")
+
+    if args.suite in ['dockerfile', 'all']:
+        logger.info("Scanning Dockerfiles (via Image History)...")
+        import subprocess
+        try:
+            from core.dockerfile.parser import set_target_image
+            
+            result = subprocess.run(["docker", "images", "-q"], capture_output=True, text=True, check=True)
+            images = set(result.stdout.strip().splitlines())
+            
+            dockerfile_results = []
+            for image in images:
+                logger.debug(f"Linting history of image {image[:12]}...")
+                set_target_image(image)
+                checks = load_and_run_module("core.dockerfile")
+                for c in checks:
+                    c["Details"] = f"[Image {image[:12]}] {c.get('Details', '')}"
+                dockerfile_results.extend(checks)
+                
+            report["Dockerfile_Security"] = dockerfile_results
+        except Exception as e:
+            logger.error(f"Failed to run Dockerfile checks: {e}")
 
     return report
 
