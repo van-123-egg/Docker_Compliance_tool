@@ -67,6 +67,11 @@ This generates a formatted, printable PDF with text-wrapped tables and color-cod
 python main.py --suite all --format pdf
 ```
 *Open `compliance_report.pdf` to view the document.*
+If you want to generate the report in your naming convention, you can use the following command:
+
+```bash
+python main.py --suite all --format pdf --output <your_report_name>.pdf
+```
 
 ### 3. JSON Output
 Useful for integrating with external tools or CI/CD pipelines.
