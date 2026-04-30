@@ -143,3 +143,70 @@ When reviewing the HTML/PDF reports or the terminal output, check for these spec
 *   **DL-08**: Storing `API_SECRET_KEY` in an `ENV` variable.
 
 If you see these flagged as **FAIL** with the exact remediation commands, the tool is working perfectly!
+
+---
+
+## Prometheus & Grafana Monitoring
+
+The tool can optionally expose compliance metrics to **Prometheus** for scraping, with a pre-built **Grafana** dashboard for visualization.
+
+### 1. Install the Prometheus Client Library
+
+```bash
+pip install prometheus_client>=0.20.0
+```
+*(Or just run `pip install -r requirements.txt` to install all dependencies.)*
+
+### 2. Start the Monitoring Stack
+
+```bash
+cd monitoring
+docker compose up -d
+```
+
+This launches:
+- **Prometheus** at `http://localhost:9090`
+- **Grafana** at `http://localhost:3000` (login: `admin` / `admin`)
+
+### 3. Run the Tool with Metrics Enabled
+
+**Single scan** (metrics are available until you close the terminal):
+```bash
+python main.py --suite all --format table --metrics
+```
+
+**Continuous scanning** (re-scans every 60 seconds, keeps metrics live):
+```bash
+python main.py --suite all --format table --metrics --metrics-interval 60
+```
+
+**Custom port**:
+```bash
+python main.py --suite all --format table --metrics --metrics-port 9100
+```
+> **Note:** If you change the port, also update `monitoring/prometheus.yml` to match.
+
+### 4. Verify Metrics
+
+| What to Check | URL | What You Should See |
+|---|---|---|
+| Raw metrics | `http://localhost:8000` | Prometheus text format with `compliance_*` metrics |
+| Prometheus targets | `http://localhost:9090/targets` | `docker-compliance-scanner` target showing **UP** |
+| Prometheus query | `http://localhost:9090/graph` | Query `compliance_score_percent` → returns a value |
+| Grafana dashboard | `http://localhost:3000` | Navigate to **Docker CIS Compliance** dashboard |
+
+### 5. Available Metrics
+
+| Metric | Description |
+|---|---|
+| `compliance_score_percent` | Overall compliance score (0–100%) |
+| `compliance_checks_failed` | Total failed checks |
+| `compliance_failures_by_severity{severity="CRITICAL\|HIGH\|MEDIUM\|LOW"}` | Failures by severity |
+| `compliance_suite_duration_seconds{suite="..."}` | Per-suite scan time in seconds |
+
+### 6. Stop the Monitoring Stack
+
+```bash
+cd monitoring
+docker compose down
+```

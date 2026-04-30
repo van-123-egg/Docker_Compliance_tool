@@ -4,6 +4,7 @@ import importlib
 import pkgutil
 import argparse
 import logging
+import time
 
 # Import our modules
 from core.reporter import ReportEngine
@@ -56,6 +57,13 @@ def main():
                         help="Show scan history from ~/.docker-compliance/scans/")
     parser.add_argument('--strict', action='store_true',
                         help="Exit with code 1 on ANY failure (default: only on CRITICAL/HIGH)")
+    parser.add_argument('--metrics', action='store_true',
+                        help="Enable Prometheus metrics exporter on an HTTP endpoint")
+    parser.add_argument('--metrics-port', type=int, default=8000,
+                        help="Port for the Prometheus metrics endpoint (default: 8000)")
+    parser.add_argument('--metrics-interval', type=int, default=0,
+                        help="Re-run scan every N seconds and update metrics (0 = run once). "
+                             "Use with --metrics to keep the exporter alive for continuous scraping.")
     
     args = parser.parse_args()
 
@@ -77,7 +85,7 @@ def main():
                 sys.exit(1)
             # Run a fresh scan
             logger.info("Running fresh scan to compare with last saved scan...")
-            report = _run_scan(args)
+            report, _ = _run_scan(args)
             engine = ReportEngine(format_type='table')
             score_info = engine._compute_score(report)
             new_scan = {
@@ -109,67 +117,113 @@ def main():
     elif args.format == 'pdf' and not args.output:
         args.output = 'compliance_report.pdf'
 
+    # ─── Start Prometheus metrics server (if enabled) ────────────────
+    if args.metrics:
+        from core.metrics_exporter import start_metrics_server, update_metrics
+        start_metrics_server(port=args.metrics_port)
+        logger.info(f"Prometheus metrics server started on http://localhost:{args.metrics_port}")
+
     # 2. Enforce Privileges
     if hasattr(os, 'geteuid') and os.geteuid() != 0:
         logger.error("This compliance tool must be run as root (sudo). Exiting.")
         sys.exit(1)
 
-    # 3. Run the scan
-    logger.info("Starting Docker CIS Compliance Scan...")
-    report = _run_scan(args)
+    # 3. Run the scan (with optional continuous loop for metrics)
+    while True:
+        logger.info("Starting Docker CIS Compliance Scan...")
+        report, suite_durations = _run_scan(args)
 
-    # 4. Generate Output
-    logger.info("Scan complete. Generating report...")
-    engine = ReportEngine(format_type=args.format, output_file=args.output)
-    score_info = engine.generate(report)
+        # 4. Generate Output
+        logger.info("Scan complete. Generating report...")
+        engine = ReportEngine(format_type=args.format, output_file=args.output)
+        score_info = engine.generate(report)
 
-    # 5. Auto-save to scan history
-    saved_path = save_scan(report, score_info)
-    logger.info(f"Scan saved to history: {saved_path}")
+        # 5. Update Prometheus metrics (if enabled)
+        if args.metrics:
+            update_metrics(score_info, suite_durations)
+            logger.info("Prometheus metrics updated.")
 
-    # 6. Exit codes for CI/CD
-    if args.strict:
-        # Strict mode: exit 1 on ANY failure
-        if score_info["failed"] > 0:
-            sys.exit(1)
-    else:
-        # Default: exit 1 only on CRITICAL or HIGH failures
-        critical_high = (
-            score_info["severity_fails"].get("CRITICAL", 0) +
-            score_info["severity_fails"].get("HIGH", 0)
-        )
-        if critical_high > 0:
-            sys.exit(1)
-        elif score_info["failed"] > 0:
-            sys.exit(2)  # Medium/Low failures only
+        # 6. Auto-save to scan history
+        saved_path = save_scan(report, score_info)
+        logger.info(f"Scan saved to history: {saved_path}")
+
+        # 7. Exit codes for CI/CD (only when NOT in metrics mode)
+        if not args.metrics:
+            if args.strict:
+                # Strict mode: exit 1 on ANY failure
+                if score_info["failed"] > 0:
+                    sys.exit(1)
+            else:
+                # Default: exit 1 only on CRITICAL or HIGH failures
+                critical_high = (
+                    score_info["severity_fails"].get("CRITICAL", 0) +
+                    score_info["severity_fails"].get("HIGH", 0)
+                )
+                if critical_high > 0:
+                    sys.exit(1)
+                elif score_info["failed"] > 0:
+                    sys.exit(2)  # Medium/Low failures only
+
+        # If --metrics-interval is set, wait and re-scan
+        if args.metrics and args.metrics_interval > 0:
+            logger.info(f"Next scan in {args.metrics_interval} seconds... (Ctrl+C to stop)")
+            try:
+                time.sleep(args.metrics_interval)
+            except KeyboardInterrupt:
+                logger.info("Shutting down.")
+                sys.exit(0)
+        elif args.metrics:
+            # Single scan with metrics: keep the process alive so Prometheus can scrape
+            logger.info("Scan complete. Metrics server running at "
+                        f"http://localhost:{args.metrics_port} — press Ctrl+C to stop.")
+            try:
+                while True:
+                    time.sleep(1)
+            except KeyboardInterrupt:
+                logger.info("Shutting down.")
+                sys.exit(0)
+        else:
+            break
 
 
 def _run_scan(args):
-    """Execute all selected suites and return the report dict."""
+    """Execute all selected suites and return the report dict and per-suite durations."""
     report = {}
+    suite_durations = {}
 
     if args.suite in ['host', 'all']:
         logger.info("Scanning Host Configuration...")
+        t0 = time.time()
         report["Host_Configuration"] = load_and_run_module("core.host")
+        suite_durations["Host_Configuration"] = round(time.time() - t0, 3)
 
     if args.suite in ['daemon', 'all']:
         logger.info("Scanning Daemon Configuration...")
+        t0 = time.time()
         report["Daemon_Configuration"] = load_and_run_module("core.daemon")
+        suite_durations["Daemon_Configuration"] = round(time.time() - t0, 3)
 
     if args.suite in ['socket', 'all']:
         logger.info("Scanning Socket Configuration...")
+        t0 = time.time()
         report["Socket_Configuration"] = load_and_run_module("core.socket")
+        suite_durations["Socket_Configuration"] = round(time.time() - t0, 3)
 
     if args.suite in ['container', 'all']:
         logger.info("Scanning Container Runtime...")
+        t0 = time.time()
         report["Container_Runtime"] = load_and_run_module("core.container")
+        suite_durations["Container_Runtime"] = round(time.time() - t0, 3)
 
     if args.suite in ['image', 'all']:
         logger.info("Scanning Docker Images...")
+        t0 = time.time()
         report["Image_Security"] = load_and_run_module("core.image")
+        suite_durations["Image_Security"] = round(time.time() - t0, 3)
 
     if args.suite in ['dockerfile', 'all']:
         logger.info("Scanning Dockerfiles (via Image History)...")
+        t0 = time.time()
         import subprocess
         try:
             from core.dockerfile.parser import set_target_image
@@ -189,8 +243,9 @@ def _run_scan(args):
             report["Dockerfile_Security"] = dockerfile_results
         except Exception as e:
             logger.error(f"Failed to run Dockerfile checks: {e}")
+        suite_durations["Dockerfile_Security"] = round(time.time() - t0, 3)
 
-    return report
+    return report, suite_durations
 
 
 if __name__ == "__main__":
