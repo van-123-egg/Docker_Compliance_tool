@@ -10,10 +10,13 @@ from datetime import datetime
 
 def _status_badge(status):
     """Return colored badge HTML for a status."""
+    if status == "WARN":
+        status = "PARTIAL_COMPLIANCE"
     colors = {
         "PASS": ("#22c55e", "#052e16"),
         "FAIL": ("#ef4444", "#450a0a"),
         "WARN": ("#f59e0b", "#451a03"),
+        "PARTIAL_COMPLIANCE": ("#f59e0b", "#451a03"),
         "N/A": ("#64748b", "#0f172a"),
         "ERROR": ("#a855f7", "#3b0764"),
         "MANUAL_REVIEW": ("#06b6d4", "#083344"),
@@ -264,6 +267,7 @@ tr:hover td { background: rgba(51, 65, 85, 0.2); }
 def generate_html_report(data, score_info, output_file):
     """Generate a self-contained HTML compliance report with Chart.js."""
     s = score_info
+    partial_count = s.get("partial_compliance", s.get("warned", 0))
     timestamp = s["timestamp"]
 
     # Prepare chart data as JSON for Chart.js
@@ -275,7 +279,7 @@ def generate_html_report(data, score_info, output_file):
     status_map = [
         ("Pass", s["passed"], "#22c55e"),
         ("Fail", s["failed"], "#ef4444"),
-        ("Warn", s["warned"], "#f59e0b"),
+        ("Partial Compliance", partial_count, "#f59e0b"),
         ("N/A", s["na"], "#64748b"),
     ]
     if s["errors"]:
@@ -324,6 +328,8 @@ def generate_html_report(data, score_info, output_file):
 
         for res in results:
             status = res.get("Status", "UNKNOWN")
+            if status == "WARN":
+                status = "PARTIAL_COMPLIANCE"
             control_id = html.escape(str(res.get("Control_ID", "N/A")))
             severity = res.get("Severity", "INFO")
             desc = html.escape(str(res.get("Description", "N/A")))
@@ -339,7 +345,7 @@ def generate_html_report(data, score_info, output_file):
                 f'</tr>'
             )
 
-            if status in ("FAIL", "WARN") and res.get("Remediation"):
+            if status in ("FAIL", "WARN", "PARTIAL_COMPLIANCE") and res.get("Remediation"):
                 rem_text = html.escape(res["Remediation"])
                 ref_text = html.escape(res.get("Reference", ""))
                 remediation_boxes.append(
@@ -526,7 +532,7 @@ def generate_html_report(data, score_info, output_file):
         <div class="stats-grid">
             <div class="stat-card stat-pass"><div class="number">{s['passed']}</div><div class="label">Passed</div></div>
             <div class="stat-card stat-fail"><div class="number">{s['failed']}</div><div class="label">Failed</div></div>
-            <div class="stat-card stat-warn"><div class="number">{s['warned']}</div><div class="label">Warnings</div></div>
+            <div class="stat-card stat-warn"><div class="number">{partial_count}</div><div class="label">Partial Compliance</div></div>
             <div class="stat-card stat-na"><div class="number">{s['na']}</div><div class="label">N/A</div></div>
         </div>
     </div>

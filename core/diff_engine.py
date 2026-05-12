@@ -11,6 +11,11 @@ except ImportError:
     tabulate = None
 
 
+def _normalize_status(status):
+    """Normalize legacy WARN to PARTIAL_COMPLIANCE for display and comparisons."""
+    return "PARTIAL_COMPLIANCE" if status == "WARN" else status
+
+
 def _flatten_results(scan_data):
     """Flatten a scan's results into a dict keyed by Control_ID."""
     results_dict = {}
@@ -24,7 +29,7 @@ def _flatten_results(scan_data):
             control_id = check.get("Control_ID")
             if control_id:
                 results_dict[control_id] = {
-                    "status": check.get("Status", "UNKNOWN"),
+                    "status": _normalize_status(check.get("Status", "UNKNOWN")),
                     "description": check.get("Description", ""),
                     "severity": check.get("Severity", "INFO"),
                     "section": section,
@@ -43,8 +48,8 @@ def compare_scans(old_scan, new_scan):
     old_ids = set(old_results.keys())
     new_ids = set(new_results.keys())
 
-    fixed = []       # FAIL/WARN -> PASS
-    regressed = []   # PASS -> FAIL/WARN
+    fixed = []       # FAIL/PARTIAL_COMPLIANCE -> PASS
+    regressed = []   # PASS -> FAIL/PARTIAL_COMPLIANCE
     new_checks = []  # Only in new scan
     removed = []     # Only in old scan
     unchanged = []   # Same status
@@ -58,9 +63,9 @@ def compare_scans(old_scan, new_scan):
 
         if old_status == new_status:
             unchanged.append({"id": cid, "status": new_status, "desc": desc, "severity": severity})
-        elif new_status == "PASS" and old_status in ("FAIL", "WARN", "ERROR"):
+        elif new_status == "PASS" and old_status in ("FAIL", "PARTIAL_COMPLIANCE", "ERROR"):
             fixed.append({"id": cid, "old": old_status, "new": new_status, "desc": desc, "severity": severity})
-        elif old_status == "PASS" and new_status in ("FAIL", "WARN", "ERROR"):
+        elif old_status == "PASS" and new_status in ("FAIL", "PARTIAL_COMPLIANCE", "ERROR"):
             regressed.append({"id": cid, "old": old_status, "new": new_status, "desc": desc, "severity": severity})
         else:
             unchanged.append({"id": cid, "status": f"{old_status} -> {new_status}", "desc": desc, "severity": severity})
