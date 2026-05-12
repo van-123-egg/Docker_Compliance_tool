@@ -162,6 +162,58 @@ body {
     height: 280px;
 }
 
+.guide-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
+    margin-bottom: 32px;
+}
+
+.guide-card {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border: 1px solid #334155;
+    border-radius: 14px;
+    padding: 18px;
+}
+
+.guide-card h3 {
+    color: #cbd5e1;
+    font-size: 15px;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.guide-text {
+    color: #94a3b8;
+    font-size: 13px;
+    margin-bottom: 10px;
+}
+
+.guide-list {
+    margin: 0;
+    padding-left: 18px;
+    color: #cbd5e1;
+    font-size: 13px;
+}
+
+.guide-list li { margin: 4px 0; }
+
+.guide-card a {
+    color: #7dd3fc;
+    text-decoration: none;
+}
+
+.guide-card a:hover { text-decoration: underline; }
+
+.legend-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 0;
+    color: #cbd5e1;
+    font-size: 13px;
+}
+
 .suite-section {
     margin-bottom: 24px;
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
@@ -254,7 +306,7 @@ tr:hover td { background: rgba(51, 65, 85, 0.2); }
 
 @media print {
     body { background: white; color: #0f172a; padding: 20px; }
-    .header, .dashboard, .chart-card, .suite-section { background: white; border-color: #e2e8f0; }
+    .header, .dashboard, .chart-card, .suite-section, .guide-card { background: white; border-color: #e2e8f0; }
     .header h1 { -webkit-text-fill-color: #1e293b; }
     .stat-card { background: #f8fafc; }
     th { background: #f1f5f9; }
@@ -312,6 +364,50 @@ def generate_html_report(data, score_info, output_file):
         score_color = "#f59e0b"
     else:
         score_color = "#ef4444"
+
+    # Action-oriented guidance for first-time users
+    priority_order = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3, "INFO": 4}
+    actionable_items = []
+    for section, results in data.items():
+        for res in results:
+            raw_status = res.get("Status", "UNKNOWN")
+            status = "PARTIAL_COMPLIANCE" if raw_status == "WARN" else raw_status
+            if status not in ("FAIL", "PARTIAL_COMPLIANCE"):
+                continue
+            actionable_items.append({
+                "section": section.replace("_", " "),
+                "control_id": str(res.get("Control_ID", "N/A")),
+                "severity": str(res.get("Severity", "INFO")),
+                "status": status,
+                "description": str(res.get("Description", "No description")),
+            })
+
+    actionable_items.sort(key=lambda x: (priority_order.get(x["severity"], 99), x["control_id"]))
+    top_actions = actionable_items[:8]
+    next_steps_html = ""
+    if top_actions:
+        action_rows = []
+        for item in top_actions:
+            action_rows.append(
+                f"<tr>"
+                f"<td><strong>{html.escape(item['control_id'])}</strong></td>"
+                f"<td>{_severity_badge(item['severity'])}</td>"
+                f"<td>{_status_badge(item['status'])}</td>"
+                f"<td>{html.escape(item['description'])}</td>"
+                f"<td>{html.escape(item['section'])}</td>"
+                f"</tr>"
+            )
+        next_steps_html = (
+            '<div class="guide-card" style="margin-bottom:32px;">'
+            '<h3>Recommended First Fixes</h3>'
+            '<p class="guide-text">Start with Critical and High issues first. These are the most security-impacting findings.</p>'
+            '<table><thead><tr>'
+            '<th>Control</th><th>Severity</th><th>Status</th><th>Why It Matters</th><th>Area</th>'
+            '</tr></thead><tbody>'
+            + "".join(action_rows) +
+            '</tbody></table>'
+            '</div>'
+        )
 
     # Build suite sections
     suite_html_parts = []
@@ -374,6 +470,43 @@ def generate_html_report(data, score_info, output_file):
         )
 
     suites_html = '\n'.join(suite_html_parts)
+    report_guide_html = """
+    <div class="guide-grid">
+        <div class="guide-card">
+            <h3>How to Read This Report</h3>
+            <p class="guide-text">This report checks your Docker setup against CIS security best practices. Higher compliance means lower risk.</p>
+            <ul class="guide-list">
+                <li><strong>Compliance %</strong>: Percentage of checks currently passing.</li>
+                <li><strong>Failures by Severity</strong>: Which failed checks are most urgent.</li>
+                <li><strong>Section Tables</strong>: Exact controls, findings, and remediation steps.</li>
+            </ul>
+        </div>
+        <div class="guide-card">
+            <h3>Status Legend</h3>
+            <div class="legend-row"><span class="badge" style="background:#22c55e;">PASS</span><span>Control meets expected security requirement.</span></div>
+            <div class="legend-row"><span class="badge" style="background:#ef4444;">FAIL</span><span>Control is not compliant and should be fixed.</span></div>
+            <div class="legend-row"><span class="badge" style="background:#f59e0b;">PARTIAL_COMPLIANCE</span><span>Partly compliant; more hardening is needed.</span></div>
+            <div class="legend-row"><span class="badge" style="background:#64748b;">N/A</span><span>Check does not apply in this environment.</span></div>
+            <div class="legend-row"><span class="badge" style="background:#06b6d4;">MANUAL_REVIEW</span><span>Needs human verification.</span></div>
+        </div>
+        <div class="guide-card">
+            <h3>Severity Legend</h3>
+            <div class="legend-row"><span class="badge" style="background:#ef4444;">CRITICAL</span><span>High probability of serious compromise impact.</span></div>
+            <div class="legend-row"><span class="badge" style="background:#f97316;">HIGH</span><span>Serious exposure to prioritize quickly.</span></div>
+            <div class="legend-row"><span class="badge" style="background:#f59e0b;">MEDIUM</span><span>Important hardening issue to schedule soon.</span></div>
+            <div class="legend-row"><span class="badge" style="background:#3b82f6;">LOW</span><span>Lower risk improvement item.</span></div>
+            <div class="legend-row"><span class="badge" style="background:#64748b;">INFO</span><span>Informational context, usually low risk.</span></div>
+        </div>
+        <div class="guide-card">
+            <h3>References</h3>
+            <ul class="guide-list">
+                <li><a href="https://www.cisecurity.org/benchmark/docker" target="_blank" rel="noopener noreferrer">CIS Docker Benchmark</a></li>
+                <li><a href="https://docs.docker.com/engine/security/" target="_blank" rel="noopener noreferrer">Docker Engine Security Documentation</a></li>
+                <li><a href="https://owasp.org/www-project-docker-top-10/" target="_blank" rel="noopener noreferrer">OWASP Docker Top 10</a></li>
+            </ul>
+        </div>
+    </div>
+    """
 
     # Chart.js JavaScript
     chart_js = f"""
@@ -536,6 +669,9 @@ def generate_html_report(data, score_info, output_file):
             <div class="stat-card stat-na"><div class="number">{s['na']}</div><div class="label">N/A</div></div>
         </div>
     </div>
+
+    {report_guide_html}
+    {next_steps_html}
 
     <div class="charts-row">
         <div class="chart-card">
