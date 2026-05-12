@@ -151,6 +151,15 @@ def generate_pdf_report(data, score_info, output_file):
         fontSize=14, textColor=HexColor("#1e293b"),
         fontName="Helvetica-Bold", spaceAfter=10, spaceBefore=16
     )
+    body_style = ParagraphStyle(
+        'BodyStyle', parent=styles['Normal'],
+        fontSize=10, textColor=HexColor("#334155"),
+        leading=14, spaceAfter=6
+    )
+    guide_list_style = ParagraphStyle(
+        'GuideListStyle', parent=body_style,
+        leftIndent=12
+    )
     rem_style = ParagraphStyle(
         'Remediation', parent=styles['Normal'],
         fontSize=8, textColor=HexColor("#92400e"),
@@ -216,7 +225,86 @@ def generate_pdf_report(data, score_info, output_file):
         ('RIGHTPADDING', (0, 0), (-1, -1), 12),
     ]))
     elements.append(score_table)
-    elements.append(Spacer(1, 40))
+    elements.append(Spacer(1, 20))
+
+    # ─── Report Guide + Legends (beginner-friendly) ────────────────
+    elements.append(Paragraph("How to Read This Report", heading_style))
+    elements.append(Paragraph(
+        "This report checks your Docker setup against CIS security best practices. "
+        "Higher compliance means lower security risk.",
+        body_style
+    ))
+    guide_points = [
+        "<b>Compliance %</b>: Percentage of checks currently passing.",
+        "<b>Failures by Severity</b>: Shows which failed checks are most urgent.",
+        "<b>Section Tables</b>: Lists exact controls, findings, and remediation steps.",
+    ]
+    for point in guide_points:
+        elements.append(Paragraph(f"• {point}", guide_list_style))
+    elements.append(Spacer(1, 10))
+
+    legend_header_style = ParagraphStyle(
+        'LegendHeaderStyle', parent=cell_header_style, alignment=TA_LEFT
+    )
+    legend_label_style = ParagraphStyle(
+        'LegendLabelStyle', parent=cell_style, fontName="Helvetica-Bold"
+    )
+
+    status_legend_rows = [
+        [Paragraph("Status Legend", legend_header_style), ""],
+        [Paragraph('<font color="#22c55e">PASS</font>', legend_label_style), Paragraph("Control meets expected security requirement.", cell_style)],
+        [Paragraph('<font color="#ef4444">FAIL</font>', legend_label_style), Paragraph("Control is not compliant and should be fixed.", cell_style)],
+        [Paragraph('<font color="#f59e0b">PARTIAL_COMPLIANCE</font>', legend_label_style), Paragraph("Partly compliant; more hardening is needed.", cell_style)],
+        [Paragraph('<font color="#64748b">N/A</font>', legend_label_style), Paragraph("Check does not apply in this environment.", cell_style)],
+        [Paragraph('<font color="#06b6d4">MANUAL_REVIEW</font>', legend_label_style), Paragraph("Needs human verification.", cell_style)],
+    ]
+    status_legend_table = Table(status_legend_rows, colWidths=[145, 315])
+    status_legend_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), HexColor("#1e293b")),
+        ('SPAN', (0, 0), (1, 0)),
+        ('GRID', (0, 0), (-1, -1), 0.5, HexColor("#e2e8f0")),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [white, HexColor("#f8fafc")]),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(status_legend_table)
+    elements.append(Spacer(1, 10))
+
+    severity_legend_rows = [
+        [Paragraph("Severity Legend", legend_header_style), ""],
+        [Paragraph('<font color="#ef4444">CRITICAL</font>', legend_label_style), Paragraph("High probability of serious compromise impact.", cell_style)],
+        [Paragraph('<font color="#f97316">HIGH</font>', legend_label_style), Paragraph("Serious exposure to prioritize quickly.", cell_style)],
+        [Paragraph('<font color="#f59e0b">MEDIUM</font>', legend_label_style), Paragraph("Important hardening issue to schedule soon.", cell_style)],
+        [Paragraph('<font color="#3b82f6">LOW</font>', legend_label_style), Paragraph("Lower risk improvement item.", cell_style)],
+        [Paragraph('<font color="#64748b">INFO</font>', legend_label_style), Paragraph("Informational context, usually low risk.", cell_style)],
+    ]
+    severity_legend_table = Table(severity_legend_rows, colWidths=[145, 315])
+    severity_legend_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), HexColor("#1e293b")),
+        ('SPAN', (0, 0), (1, 0)),
+        ('GRID', (0, 0), (-1, -1), 0.5, HexColor("#e2e8f0")),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [white, HexColor("#f8fafc")]),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(severity_legend_table)
+    elements.append(Spacer(1, 10))
+
+    elements.append(Paragraph("References", heading_style))
+    refs = [
+        "1. CIS Docker Benchmark: https://www.cisecurity.org/benchmark/docker",
+        "2. Docker Engine Security Documentation: https://docs.docker.com/engine/security/",
+        "3. OWASP Docker Top 10: https://owasp.org/www-project-docker-top-10/",
+    ]
+    for ref in refs:
+        elements.append(Paragraph(ref, body_style))
+    elements.append(Spacer(1, 20))
 
     # ─── Suite Detail Sections ───────────────────────────────────────
 
