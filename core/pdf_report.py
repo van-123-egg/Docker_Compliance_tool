@@ -42,6 +42,7 @@ STATUS_COLORS = {
     "PASS": COLORS["pass"],
     "FAIL": COLORS["fail"],
     "WARN": COLORS["warn"],
+    "PARTIAL_COMPLIANCE": COLORS["warn"],
     "N/A": COLORS["na"],
     "ERROR": COLORS["error"],
     "MANUAL_REVIEW": HexColor("#06b6d4"),
@@ -174,6 +175,7 @@ def generate_pdf_report(data, score_info, output_file):
 
     elements = []
     s = score_info
+    partial_count = s.get("partial_compliance", s.get("warned", 0))
 
     # ─── Title Page ──────────────────────────────────────────────────
 
@@ -186,7 +188,7 @@ def generate_pdf_report(data, score_info, output_file):
     score_data = [
         ["Compliance Score", f"{s['score_pct']}%"],
         ["Checks Passed", f"{s['passed']} / {s['passed'] + s['failed']}"],
-        ["Status", f"PASS: {s['passed']}  |  FAIL: {s['failed']}  |  WARN: {s['warned']}  |  N/A: {s['na']}"],
+        ["Status", f"PASS: {s['passed']}  |  FAIL: {s['failed']}  |  PARTIAL_COMPLIANCE: {partial_count}  |  N/A: {s['na']}"],
     ]
 
     if s['failed'] > 0:
@@ -224,7 +226,7 @@ def generate_pdf_report(data, score_info, output_file):
         "LOW": "#3b82f6", "INFO": "#64748b"
     }
     STATUS_HEX = {
-        "PASS": "#22c55e", "FAIL": "#ef4444", "WARN": "#f59e0b",
+        "PASS": "#22c55e", "FAIL": "#ef4444", "WARN": "#f59e0b", "PARTIAL_COMPLIANCE": "#f59e0b",
         "N/A": "#64748b", "ERROR": "#a855f7", "MANUAL_REVIEW": "#06b6d4",
     }
 
@@ -255,6 +257,8 @@ def generate_pdf_report(data, score_info, output_file):
             control_id = str(res.get("Control_ID", "N/A"))
             severity = res.get("Severity", "INFO")
             status = res.get("Status", "UNKNOWN")
+            if status == "WARN":
+                status = "PARTIAL_COMPLIANCE"
             desc = str(res.get("Description", "N/A"))
             details = str(res.get("Details", "N/A"))
 
@@ -292,7 +296,7 @@ def generate_pdf_report(data, score_info, output_file):
 
         # Remediation guidance for failures
         for res in results:
-            if res.get("Status") in ("FAIL", "WARN") and res.get("Remediation"):
+            if res.get("Status") in ("FAIL", "WARN", "PARTIAL_COMPLIANCE") and res.get("Remediation"):
                 control_id = res.get("Control_ID", "N/A")
                 rem_text = res["Remediation"].replace("\n", "<br/>")
                 ref_text = res.get("Reference", "")

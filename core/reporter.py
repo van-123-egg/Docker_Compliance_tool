@@ -36,7 +36,7 @@ class ReportEngine:
         total = 0
         passed = 0
         failed = 0
-        warned = 0
+        partial_compliance = 0
         errors = 0
         na = 0
         manual = 0
@@ -54,9 +54,11 @@ class ReportEngine:
                     total += 1
                     failed += 1
                     severity_fails[severity] = severity_fails.get(severity, 0) + 1
-                elif status == "WARN":
+                elif status in ("WARN", "PARTIAL_COMPLIANCE"):
                     total += 1
-                    warned += 1
+                    failed += 1
+                    partial_compliance += 1
+                    severity_fails[severity] = severity_fails.get(severity, 0) + 1
                 elif status == "ERROR":
                     errors += 1
                 elif status in ("N/A",):
@@ -72,7 +74,8 @@ class ReportEngine:
             "total": total,
             "passed": passed,
             "failed": failed,
-            "warned": warned,
+            "warned": partial_compliance,
+            "partial_compliance": partial_compliance,
             "errors": errors,
             "na": na,
             "manual": manual,
@@ -107,7 +110,8 @@ class ReportEngine:
             f"  |{'':^{width}}|",
         ]
 
-        status_line = f"PASS: {s['passed']}  |  FAIL: {s['failed']}  |  WARN: {s['warned']}  |  N/A: {s['na']}"
+        partial_count = s.get("partial_compliance", s.get("warned", 0))
+        status_line = f"PASS: {s['passed']}  |  FAIL: {s['failed']}  |  PARTIAL_COMPLIANCE: {partial_count}  |  N/A: {s['na']}"
         if s['errors']:
             status_line += f"  |  ERROR: {s['errors']}"
         if s['manual']:
@@ -179,10 +183,14 @@ class ReportEngine:
 
                     severity = res.get("Severity", "INFO")
 
+                    status = res.get("Status", "UNKNOWN")
+                    if status == "WARN":
+                        status = "PARTIAL_COMPLIANCE"
+
                     table_data.append([
                         res.get("Control_ID", "N/A"),
                         severity,
-                        res.get("Status", "UNKNOWN"),
+                        status,
                         desc,
                         details
                     ])
@@ -193,7 +201,7 @@ class ReportEngine:
 
             # Show remediation for failed checks
             for res in results:
-                if res.get("Status") in ("FAIL", "WARN") and res.get("Remediation"):
+                if res.get("Status") in ("FAIL", "WARN", "PARTIAL_COMPLIANCE") and res.get("Remediation"):
                     output_lines.append(f"\n  >> Remediation for {res.get('Control_ID')}:")
                     for line in res["Remediation"].split("\n"):
                         output_lines.append(f"     {line}")
